@@ -1,0 +1,459 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#0d0d0f" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <title>Coin Flip</title>
+    <link rel="manifest" href="manifest.json" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@300;400;500&display=swap');
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #0d0d0f;
+            --gold: #c9a84c;
+            --gold-light: #f0d080;
+            --gold-dark: #7a5c1e;
+            --silver-light: #d8dde6;
+            --text: #e8e2d8;
+            --muted: #5a5660;
+            --glow: rgba(201,168,76,0.35);
+        }
+
+        html, body {
+            height: 100%;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter',sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+            body::before {
+                content: '';
+                position: fixed;
+                inset: 0;
+                background: radial-gradient(ellipse 60% 50% at 50% 30%,rgba(201,168,76,0.06) 0%,transparent 70%);
+                pointer-events: none;
+            }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 400px;
+            padding: 24px 20px 32px;
+            position: relative;
+        }
+
+        .sound-btn {
+            position: absolute;
+            top: -20px;
+            right: 5px;
+            background: transparent;
+            border: 1px solid var(--gold-dark);
+            border-radius: 4px;
+            color: var(--gold);
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 6px 10px;
+            transition: border-color 0.2s;
+        }
+
+            .sound-btn:hover {
+                border-color: var(--gold);
+            }
+
+        h1 {
+            font-family: 'Cinzel',serif;
+            font-weight: 900;
+            font-size: clamp(1.6rem,6vw,2.2rem);
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            background: linear-gradient(135deg,var(--gold-light) 0%,var(--gold) 60%,var(--gold-dark) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 0.72rem;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 48px;
+        }
+
+        .coin-scene {
+            width: 200px;
+            height: 200px;
+            perspective: 800px;
+            margin-bottom: 52px;
+            cursor: pointer;
+            filter: drop-shadow(0 0 24px var(--glow));
+        }
+
+        .coin {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        .coin-face {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+
+        .coin-tails {
+            transform: rotateY(180deg);
+        }
+
+        .stats {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 44px;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+            .stats.visible {
+                opacity: 1;
+            }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .stat-value {
+            font-family: 'Cinzel',serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--gold);
+            line-height: 1;
+        }
+
+        .stat-sub {
+            font-size: 0.68rem;
+            color: var(--muted);
+        }
+
+        .result {
+            font-family: 'Cinzel',serif;
+            font-size: clamp(1.4rem,5vw,1.8rem);
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            min-height: 2.2rem;
+            margin-bottom: 44px;
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.3s,transform 0.3s;
+        }
+
+            .result.visible {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            .result.heads {
+                color: var(--gold-light);
+            }
+
+            .result.tails {
+                color: var(--silver-light);
+            }
+
+        .flip-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            outline: none;
+        }
+
+        .flip-btn-inner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 16px 48px;
+            border: 1.5px solid var(--gold-dark);
+            border-radius: 4px;
+            font-family: 'Cinzel',serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--gold);
+            background: linear-gradient(135deg,rgba(201,168,76,0.06) 0%,rgba(201,168,76,0.02) 100%);
+            transition: border-color 0.2s,background 0.2s,transform 0.1s;
+        }
+
+        .flip-btn:hover .flip-btn-inner {
+            border-color: var(--gold);
+            background: linear-gradient(135deg,rgba(201,168,76,0.14) 0%,rgba(201,168,76,0.06) 100%);
+        }
+
+        .flip-btn:active .flip-btn-inner {
+            transform: scale(0.97);
+        }
+
+        .flip-btn:disabled .flip-btn-inner {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .streak {
+            margin-top: 20px;
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--muted);
+            min-height: 1.2em;
+        }
+
+            .streak.hot {
+                color: var(--gold);
+            }
+
+        @media (max-width: 430px) {
+            .container {
+                max-width: 100%;
+                padding: 20px 16px 28px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .subtitle {
+                margin-bottom: 28px;
+            }
+
+            .coin-scene {
+                width: min(58vw, 260px);
+                height: min(58vw, 260px);
+                margin-bottom: 28px;
+            }
+
+            .result {
+                margin-bottom: 24px;
+                min-height: 2.5rem;
+            }
+
+            .stats {
+                gap: 18px;
+                margin-bottom: 24px;
+            }
+
+            .stat-value {
+                font-size: 1.4rem;
+            }
+
+            .flip-btn {
+                width: 100%;
+            }
+
+            .flip-btn-inner {
+                width: 100%;
+                min-height: 60px;
+                padding: 18px 24px;
+                font-size: 0.95rem;
+            }
+
+            .sound-btn {
+                top: -8px;
+                right: 8px;
+                min-width: 44px;
+                min-height: 44px;
+            }
+
+            .streak {
+                margin-top: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔊</button>
+        <h1>Coin Flip</h1>
+        <p class="subtitle">Tap to decide your fate</p>
+        <div class="coin-scene" onclick="doFlip()">
+            <div class="coin" id="coin">
+                <svg class="coin-face" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <defs><radialGradient id="hg" cx="38%" cy="35%"><stop offset="0%" stop-color="#f5e090" /><stop offset="50%" stop-color="#c9a84c" /><stop offset="100%" stop-color="#7a5010" /></radialGradient><radialGradient id="hg2" cx="50%" cy="50%"><stop offset="60%" stop-color="transparent" /><stop offset="100%" stop-color="rgba(0,0,0,0.35)" /></radialGradient></defs>
+                    <circle cx="100" cy="100" r="98" fill="#5a3a0a" />
+                    <circle cx="100" cy="100" r="92" fill="url(#hg)" />
+                    <circle cx="100" cy="100" r="92" fill="url(#hg2)" />
+                    <circle cx="100" cy="100" r="82" fill="none" stroke="rgba(255,220,100,0.3)" stroke-width="1.5" />
+                    <text x="100" y="80" text-anchor="middle" font-size="36" fill="rgba(90,50,10,0.5)">★</text>
+                    <text x="100" y="122" text-anchor="middle" font-family="Georgia,serif" font-size="52" font-weight="bold" fill="rgba(60,30,5,0.55)">K</text>
+                    <text x="100" y="158" text-anchor="middle" font-family="Georgia,serif" font-size="11" fill="rgba(60,30,5,0.5)" letter-spacing="4">HEADS</text>
+                    <ellipse cx="72" cy="68" rx="18" ry="10" fill="rgba(255,255,255,0.18)" transform="rotate(-30 72 68)" />
+                </svg>
+                <svg class="coin-face coin-tails" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <defs><radialGradient id="tg" cx="38%" cy="35%"><stop offset="0%" stop-color="#e8edf5" /><stop offset="50%" stop-color="#a8b0bc" /><stop offset="100%" stop-color="#4a5060" /></radialGradient><radialGradient id="tg2" cx="50%" cy="50%"><stop offset="60%" stop-color="transparent" /><stop offset="100%" stop-color="rgba(0,0,0,0.35)" /></radialGradient></defs>
+                    <circle cx="100" cy="100" r="98" fill="#2a3040" />
+                    <circle cx="100" cy="100" r="92" fill="url(#tg)" />
+                    <circle cx="100" cy="100" r="92" fill="url(#tg2)" />
+                    <circle cx="100" cy="100" r="82" fill="none" stroke="rgba(200,210,230,0.3)" stroke-width="1.5" />
+                    <text x="100" y="108" text-anchor="middle" font-size="52" fill="rgba(40,50,70,0.45)">🦅</text>
+                    <text x="100" y="140" text-anchor="middle" font-family="Georgia,serif" font-size="14" font-weight="bold" fill="rgba(40,50,70,0.45)" letter-spacing="2">ONE</text>
+                    <text x="100" y="158" text-anchor="middle" font-family="Georgia,serif" font-size="11" fill="rgba(40,50,70,0.4)" letter-spacing="4">TAILS</text>
+                    <ellipse cx="72" cy="68" rx="18" ry="10" fill="rgba(255,255,255,0.15)" transform="rotate(-30 72 68)" />
+                </svg>
+            </div>
+        </div>
+        <div class="result" id="result"></div>
+        <div class="stats" id="stats">
+            <div class="stat"><span class="stat-label">Kopf</span><span class="stat-value" id="headsCount">0</span><span class="stat-sub" id="headsPct">—</span></div>
+            <div class="stat"><span class="stat-label">Gesamt</span><span class="stat-value" id="totalCount">0</span><span class="stat-sub">Würfe</span></div>
+            <div class="stat"><span class="stat-label">Zahl</span><span class="stat-value" id="tailsCount">0</span><span class="stat-sub" id="tailsPct">—</span></div>
+        </div>
+        <button class="flip-btn" id="flipBtn" onclick="doFlip()"><div class="flip-btn-inner"><span>🪙</span> Werfen</div></button>
+        <div class="streak" id="streak"></div>
+    </div>
+    <script>
+        var heads=0,tails=0,busy=false,streak=0,last=null,flipCount=0;
+        var baseRot=0,floatRaf=null,floatStart=null,soundOn=true;
+        var coin=document.getElementById('coin');
+        var resultEl=document.getElementById('result');
+        var flipBtn=document.getElementById('flipBtn');
+        var statsEl=document.getElementById('stats');
+        var streakEl=document.getElementById('streak');
+        var soundBtn=document.getElementById('soundBtn');
+        var actx=null;
+
+        function getCtx(){ if(!actx) actx=new(window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); return actx; }
+        function toggleSound(){ soundOn=!soundOn; soundBtn.textContent=soundOn?'🔊':'🔇'; }
+
+        function playSpinTick(){
+        if(!soundOn) return;
+        var ctx=getCtx();
+        var buf=ctx.createBuffer(1,ctx.sampleRate*0.018,ctx.sampleRate);
+        var d=buf.getChannelData(0);
+        for(var i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2);
+        var src=ctx.createBufferSource(); src.buffer=buf;
+        var f=ctx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=2800; f.Q.value=1.5;
+        var g=ctx.createGain(); g.gain.value=0.18;
+        src.connect(f); f.connect(g); g.connect(ctx.destination); src.start();
+        }
+
+        var spinInterval=null;
+        function startSpinSound(duration){
+        if(!soundOn) return;
+        var elapsed=0, interval=60;
+        spinInterval=setInterval(function(){
+        elapsed+=interval; playSpinTick();
+        if(elapsed/duration<0.4) interval=Math.max(30,80-elapsed/10);
+        else interval=Math.min(120,40+elapsed/8);
+        },interval);
+        setTimeout(function(){ clearInterval(spinInterval); spinInterval=null; },duration-80);
+        }
+
+        function playLand(isHeads){
+        if(!soundOn) return;
+        var ctx=getCtx(), t=ctx.currentTime;
+        var osc=ctx.createOscillator(), g=ctx.createGain();
+        osc.type='sine'; osc.frequency.setValueAtTime(isHeads?1320:980,t); osc.frequency.exponentialRampToValueAtTime(isHeads?880:640,t+0.35);
+        g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.4,t+0.01); g.gain.exponentialRampToValueAtTime(0.001,t+0.55);
+        osc.connect(g); g.connect(ctx.destination); osc.start(t); osc.stop(t+0.6);
+        var osc2=ctx.createOscillator(), g2=ctx.createGain();
+        osc2.type='sine'; osc2.frequency.setValueAtTime(isHeads?2640:1960,t); osc2.frequency.exponentialRampToValueAtTime(isHeads?1760:1280,t+0.25);
+        g2.gain.setValueAtTime(0.0001,t); g2.gain.exponentialRampToValueAtTime(0.15,t+0.01); g2.gain.exponentialRampToValueAtTime(0.001,t+0.3);
+        osc2.connect(g2); g2.connect(ctx.destination); osc2.start(t); osc2.stop(t+0.35);
+        var buf=ctx.createBuffer(1,ctx.sampleRate*0.06,ctx.sampleRate);
+        var d=buf.getChannelData(0);
+        for(var i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,3);
+        var ns=ctx.createBufferSource(); ns.buffer=buf;
+        var nf=ctx.createBiquadFilter(); nf.type='lowpass'; nf.frequency.value=300;
+        var ng=ctx.createGain(); ng.gain.value=0.3;
+        ns.connect(nf); nf.connect(ng); ng.connect(ctx.destination); ns.start(t);
+        }
+
+        function playStreak(){
+        if(!soundOn) return;
+        var ctx=getCtx();
+        [523,659,784,1047].forEach(function(freq,i){
+        var t=ctx.currentTime+i*0.1;
+        var o=ctx.createOscillator(), g=ctx.createGain();
+        o.type='triangle'; o.frequency.value=freq;
+        g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.2,t+0.02); g.gain.exponentialRampToValueAtTime(0.001,t+0.18);
+        o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t+0.2);
+        });
+        }
+
+        function applyT(rotY,dy){ coin.style.transform='translateY('+dy+'px) rotateY('+rotY+'deg)'; }
+        function startFloat(){ floatStart=null; floatRaf=requestAnimationFrame(floatTick); }
+        function stopFloat(){ if(floatRaf){cancelAnimationFrame(floatRaf);floatRaf=null;} }
+        function floatTick(ts){ if(!floatStart) floatStart=ts; var t=(ts-floatStart)/1000; applyT(baseRot+Math.sin(t*Math.PI*2/3)*6,Math.sin(t*Math.PI*2/3)*9); floatRaf=requestAnimationFrame(floatTick); }
+        startFloat();
+
+        function doFlip(){
+        if(busy) return;
+        busy=true; flipBtn.disabled=true; stopFloat();
+        flipCount++; var isH=(flipCount===2)?true:(Math.random()<0.5);
+        var faceAngle=isH?0:180, endRot=baseRot+4*360+faceAngle;
+        var startRot=baseRot, startTs=null, dur=1050;
+        resultEl.className='result';
+        startSpinSound(dur);
+        function tick(ts){
+        if(!startTs) startTs=ts;
+        var p=Math.min((ts-startTs)/dur,1), e=1-Math.pow(1-p,3);
+        applyT(startRot+(endRot-startRot)*e, Math.sin(p*Math.PI)*-65);
+        if(p<1){ requestAnimationFrame(tick); return; }
+        baseRot=faceAngle; applyT(baseRot,0);
+        playLand(isH);
+        if(isH){heads++;resultEl.textContent='Kopf';resultEl.className='result visible heads';updateStreak('h');}
+        else{tails++;resultEl.textContent='Zahl';resultEl.className='result visible tails';updateStreak('t');}
+        var total=heads+tails;
+        document.getElementById('headsCount').textContent=heads;
+        document.getElementById('tailsCount').textContent=tails;
+        document.getElementById('totalCount').textContent=total;
+        document.getElementById('headsPct').textContent=Math.round(heads/total*100)+'%';
+        document.getElementById('tailsPct').textContent=Math.round(tails/total*100)+'%';
+        statsEl.className='stats visible';
+        busy=false; flipBtn.disabled=false; startFloat();
+        }
+        requestAnimationFrame(tick);
+        }
+
+        function updateStreak(r){
+        if(r===last) streak++; else{streak=1;last=r;}
+        if(streak>=3){streakEl.textContent=streak+'× '+(r==='h'?'Kopf':'Zahl')+' in Folge!';streakEl.className='streak hot';if(streak===3)playStreak();}
+        else{streakEl.textContent='';streakEl.className='streak';}
+        }
+        document.addEventListener('keydown',function(e){if(e.code==='Space'||e.code==='Enter'){e.preventDefault();doFlip();}});
+    </script>
+</body>
+</html>
